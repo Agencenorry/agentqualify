@@ -6,6 +6,18 @@ import { createServiceRoleClient } from '@/lib/supabase';
 import { getAnthropicClient, CLAUDE_MODEL } from '@/lib/anthropic';
 import type { Client, Lead, ChatMessage } from '@/lib/types';
 
+function corsHeaders() {
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 200, headers: corsHeaders() });
+}
+
 const QUALIFY_REGEX = /\[QUALIFY:\s*([^\]]+)\]/;
 
 function buildSystemPrompt(client: Client): string {
@@ -72,7 +84,7 @@ export async function POST(request: NextRequest) {
     if (!clientId || !messages?.length) {
       return NextResponse.json(
         { error: 'clientId et messages requis' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders() }
       );
     }
 
@@ -87,7 +99,7 @@ export async function POST(request: NextRequest) {
     if (clientError || !client) {
       return NextResponse.json(
         { error: 'Client introuvable ou inactif' },
-        { status: 404 }
+        { status: 404, headers: corsHeaders() }
       );
     }
 
@@ -243,17 +255,20 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
-      content,
-      qualified: Boolean(qualifyData),
-      lead: lead ?? undefined,
-      conversationId: conversationId ?? undefined,
-    });
+    return NextResponse.json(
+      {
+        content,
+        qualified: Boolean(qualifyData),
+        lead: lead ?? undefined,
+        conversationId: conversationId ?? undefined,
+      },
+      { headers: corsHeaders() }
+    );
   } catch (err) {
     console.error('[api/chat]', err);
     return NextResponse.json(
       { error: 'Erreur lors de l\'appel à l\'assistant' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders() }
     );
   }
 }
