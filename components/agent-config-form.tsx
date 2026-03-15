@@ -57,17 +57,17 @@ export function AgentConfigForm({ client, onSuccess }: ConfigFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <h3 className="mb-4 font-medium text-zinc-900">Informations client</h3>
+      <section className="space-y-6">
+        <h3 className="text-sm font-semibold uppercase tracking-widest text-[var(--text-muted)]">Informations client</h3>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-sm text-zinc-600">Nom</label>
+            <label className="mb-1 block text-[0.7rem] uppercase tracking-widest text-[var(--text-muted)]">Nom</label>
             <input
               type="text"
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               required
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900"
+              className="input-base w-full"
             />
           </div>
           <div>
@@ -76,7 +76,7 @@ export function AgentConfigForm({ client, onSuccess }: ConfigFormProps) {
               type="url"
               value={form.website_url}
               onChange={(e) => setForm((f) => ({ ...f, website_url: e.target.value }))}
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900"
+              className="input-base w-full"
             />
           </div>
           <div>
@@ -85,7 +85,7 @@ export function AgentConfigForm({ client, onSuccess }: ConfigFormProps) {
               type="email"
               value={form.contact_email}
               onChange={(e) => setForm((f) => ({ ...f, contact_email: e.target.value }))}
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900"
+              className="input-base w-full"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -101,8 +101,8 @@ export function AgentConfigForm({ client, onSuccess }: ConfigFormProps) {
         </div>
       </section>
 
-      <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <h3 className="mb-4 font-medium text-zinc-900">Agent IA</h3>
+      <section className="rounded-xl border-b border-[var(--border)] pb-6">
+        <h3 className="mb-4 font-semibold text-[var(--text-primary)]">Agent IA</h3>
         <div className="space-y-4">
           <div>
             <label className="mb-1 block text-sm text-zinc-600">Nom de l'agent</label>
@@ -110,7 +110,7 @@ export function AgentConfigForm({ client, onSuccess }: ConfigFormProps) {
               type="text"
               value={form.agent_name}
               onChange={(e) => setForm((f) => ({ ...f, agent_name: e.target.value }))}
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900"
+              className="input-base w-full"
             />
           </div>
           <div>
@@ -119,7 +119,7 @@ export function AgentConfigForm({ client, onSuccess }: ConfigFormProps) {
               value={form.agent_greeting}
               onChange={(e) => setForm((f) => ({ ...f, agent_greeting: e.target.value }))}
               rows={2}
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900"
+              className="input-base w-full"
             />
           </div>
           <div>
@@ -128,7 +128,7 @@ export function AgentConfigForm({ client, onSuccess }: ConfigFormProps) {
               value={form.business_description}
               onChange={(e) => setForm((f) => ({ ...f, business_description: e.target.value }))}
               rows={2}
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900"
+              className="input-base w-full"
             />
           </div>
           <div>
@@ -137,7 +137,7 @@ export function AgentConfigForm({ client, onSuccess }: ConfigFormProps) {
               value={form.business_offers}
               onChange={(e) => setForm((f) => ({ ...f, business_offers: e.target.value }))}
               rows={2}
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900"
+              className="input-base w-full"
             />
           </div>
           <div>
@@ -146,7 +146,7 @@ export function AgentConfigForm({ client, onSuccess }: ConfigFormProps) {
               value={form.icp}
               onChange={(e) => setForm((f) => ({ ...f, icp: e.target.value }))}
               rows={2}
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900"
+              className="input-base w-full"
             />
           </div>
           <div>
@@ -155,7 +155,7 @@ export function AgentConfigForm({ client, onSuccess }: ConfigFormProps) {
               value={form.disqualify_criteria}
               onChange={(e) => setForm((f) => ({ ...f, disqualify_criteria: e.target.value }))}
               rows={2}
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900"
+              className="input-base w-full"
             />
           </div>
           <div>
@@ -165,7 +165,7 @@ export function AgentConfigForm({ client, onSuccess }: ConfigFormProps) {
               onChange={(e) => setForm((f) => ({ ...f, qualification_questions: e.target.value }))}
               rows={4}
               placeholder="Quel est votre rôle ?&#10;Quelle est la taille de votre équipe ?"
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900"
+              className="input-base w-full"
             />
           </div>
           <div>
@@ -174,7 +174,7 @@ export function AgentConfigForm({ client, onSuccess }: ConfigFormProps) {
               type="url"
               value={form.rdv_link}
               onChange={(e) => setForm((f) => ({ ...f, rdv_link: e.target.value }))}
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900"
+              className="input-base w-full"
             />
           </div>
           <div>
@@ -183,14 +183,14 @@ export function AgentConfigForm({ client, onSuccess }: ConfigFormProps) {
               type="email"
               value={form.notification_email}
               onChange={(e) => setForm((f) => ({ ...f, notification_email: e.target.value }))}
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900"
+              className="input-base w-full"
             />
           </div>
         </div>
       </section>
 
-      <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <h3 className="mb-4 font-medium text-zinc-900">Widget</h3>
+      <section className="rounded-xl border-b border-[var(--border)] pb-6">
+        <h3 className="mb-4 font-semibold text-[var(--text-primary)]">Widget</h3>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="mb-1 block text-sm text-zinc-600">Couleur</label>
@@ -206,7 +206,7 @@ export function AgentConfigForm({ client, onSuccess }: ConfigFormProps) {
             <select
               value={form.widget_position}
               onChange={(e) => setForm((f) => ({ ...f, widget_position: e.target.value }))}
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900"
+              className="input-base w-full"
             >
               <option value="bottom-right">Bas droite</option>
               <option value="bottom-left">Bas gauche</option>
@@ -221,7 +221,7 @@ export function AgentConfigForm({ client, onSuccess }: ConfigFormProps) {
       <button
         type="submit"
         disabled={saving}
-        className="rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-800 disabled:opacity-50"
+        className="btn-primary w-full rounded-xl py-3.5 font-semibold disabled:opacity-50"
       >
         {saving ? "Enregistrement..." : "Enregistrer"}
       </button>

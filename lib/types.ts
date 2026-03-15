@@ -7,27 +7,13 @@ export type LeadStatus = 'hot' | 'warm' | 'cold';
 /** Types de déclencheurs pour l'overlay */
 export type TriggerType = 'click' | 'page' | 'timer' | 'scroll';
 
-export interface TriggerConfigClick {
-  selector: string;
-}
-export interface TriggerConfigPage {
-  path: string;
-  delaySeconds?: number;
-}
-export interface TriggerConfigTimer {
-  path?: string;
-  seconds: number;
-}
-export interface TriggerConfigScroll {
+export interface TriggerConfig {
   selector?: string;
+  path?: string;
+  delaySeconds?: number;
+  seconds?: number;
   threshold?: number;
 }
-
-export type TriggerConfig =
-  | TriggerConfigClick
-  | TriggerConfigPage
-  | TriggerConfigTimer
-  | TriggerConfigScroll;
 
 export interface Trigger {
   id: string;

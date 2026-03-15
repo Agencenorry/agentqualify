@@ -17,60 +17,69 @@ export function ConfigClient({ client }: ConfigClientProps) {
   );
 
   return (
-    <div className="p-8">
-      <div className="mb-6 flex items-center gap-4">
-        <Link
-          href={`/dashboard/clients/${client.id}`}
-          className="text-sm text-zinc-500 hover:text-zinc-900"
-        >
-          ← Retour au client
-        </Link>
-      </div>
-      <h1 className="mb-2 text-2xl font-semibold text-zinc-900">
-        Configuration de l'agent
-      </h1>
-      <p className="mb-8 text-zinc-500">{client.name}</p>
+    <div className="px-[40px] py-8">
+      <nav className="mb-4 text-sm text-[var(--text-muted)]">
+        <Link href="/dashboard/clients" className="hover:text-[var(--purple-mid)]">Clients</Link>
+        <span className="mx-2">/</span>
+        <Link href={`/dashboard/clients/${client.id}`} className="hover:text-[var(--purple-mid)]">{client.name}</Link>
+        <span className="mx-2">/</span>
+        <span className="text-[var(--text-primary)]">Configuration</span>
+      </nav>
 
-      <div className="mb-8">
-        <AgentConfigForm client={client} />
-      </div>
+      <h1 className="mb-2 text-[1.75rem] font-bold text-[var(--text-primary)]">Configuration de l'agent</h1>
+      <p className="mb-8 text-[var(--text-muted)]">{client.name}</p>
 
-      <div className="mb-8">
-        <TriggerEditor
-          clientId={client.id}
-          triggers={triggers}
-          onUpdate={setTriggers}
-        />
-      </div>
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <div className="card mb-8 p-6">
+            <AgentConfigForm client={client} />
+          </div>
+          <div className="card p-6">
+            <TriggerEditor
+              clientId={client.id}
+              triggers={triggers}
+              onUpdate={setTriggers}
+            />
+          </div>
+        </div>
 
-      <div className="mt-8">
-        <WidgetPreview
-          clientId={client.id}
-          widgetColor={client.widget_color ?? undefined}
-          widgetPosition={client.widget_position ?? undefined}
-        />
-        <p className="mt-3 flex items-center gap-3">
-          <a
-            href={`/api/chat/init?clientId=${client.id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
-          >
-            Tester le widget
-          </a>
-          <span className="text-sm text-zinc-500">
-            Ouvre la réponse de l’API init (agentName, greeting, triggers) dans un nouvel onglet.
-          </span>
-        </p>
-        <p className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-          Les déclencheurs sont chargés automatiquement. Aucune modification du
-          snippet nécessaire après configuration.
-        </p>
-        <p className="mt-2 text-sm text-zinc-500">
-          Exemple pour un déclenchement manuel : ajoutez{" "}
-          <code className="rounded bg-zinc-100 px-1">data-aq-trigger</code> sur
-          n'importe quel élément HTML (ex. un bouton « Demander une démo »).
-        </p>
+        <div className="lg:col-span-1">
+          <div className="sticky top-6 space-y-6">
+            <WidgetPreview
+              clientId={client.id}
+              widgetColor={client.widget_color ?? undefined}
+              widgetPosition={client.widget_position ?? undefined}
+            />
+            <div className="card p-6">
+              <h3 className="mb-2 font-semibold text-[var(--text-primary)]">Aperçu</h3>
+              <p className="mb-4 text-sm text-[var(--text-muted)]">
+                Le widget s'affiche en {client.widget_position === "bottom-right" ? "bas à droite" : client.widget_position === "bottom-left" ? "bas à gauche" : client.widget_position ?? "bas à droite"}.
+              </p>
+              <div className="h-24 rounded-xl border-2 border-dashed border-[var(--border)] bg-[var(--cream)] flex items-center justify-center text-[var(--text-muted)] text-sm">
+                Mini preview
+              </div>
+            </div>
+            <p className="flex items-center gap-3 text-sm">
+              <a
+                href={`/api/chat/init?clientId=${client.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-lg border border-[var(--border)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--cream)]"
+              >
+                Tester le widget
+              </a>
+              <span className="text-[var(--text-muted)]">
+                Ouvre l'API init dans un nouvel onglet.
+              </span>
+            </p>
+            <p className="rounded-lg border border-[var(--purple-light)] bg-[rgba(228,198,251,0.2)] px-4 py-3 text-sm text-[var(--text-primary)]">
+              Les déclencheurs sont chargés automatiquement. Aucune modification du snippet nécessaire.
+            </p>
+            <p className="text-sm text-[var(--text-muted)]">
+              Pour un déclenchement manuel : ajoutez <code className="rounded bg-[var(--cream)] px-1">data-aq-trigger</code> sur un élément HTML.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

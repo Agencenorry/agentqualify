@@ -1,5 +1,5 @@
 import { DashboardAuth } from "@/components/dashboard-auth";
-import { Sidebar } from "@/components/sidebar";
+import { DashboardShell } from "@/components/dashboard-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -10,12 +10,7 @@ export default function DashboardLayout({
 }) {
   return (
     <DashboardAuth>
-      <div className="flex min-h-screen bg-zinc-50">
-        <Sidebar />
-        <main className="flex-1 overflow-auto">
-          {children}
-        </main>
-      </div>
+      <DashboardShell>{children}</DashboardShell>
     </DashboardAuth>
   );
 }

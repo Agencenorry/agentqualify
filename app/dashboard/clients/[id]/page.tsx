@@ -14,22 +14,16 @@ async function getClient(id: string) {
 
 async function getClientStats(clientId: string) {
   const supabase = createServiceRoleClient();
-  const [{ count: convCount }, { count: leadsCount }] = await Promise.all([
-    supabase.from("conversations").select("*", { count: "exact", head: true }).eq("client_id", clientId),
+  const [{ count: leadsCount }] = await Promise.all([
     supabase.from("leads").select("*", { count: "exact", head: true }).eq("client_id", clientId),
   ]);
-  const { count: qualifiedCount } = await supabase
-    .from("conversations")
-    .select("*", { count: "exact", head: true })
-    .eq("client_id", clientId)
-    .eq("is_qualified", true);
-  const totalConv = convCount ?? 0;
-  const rate = totalConv > 0 ? Math.round(((qualifiedCount ?? 0) / totalConv) * 100) : 0;
-  return {
-    conversations: totalConv,
-    leads: leadsCount ?? 0,
-    qualificationRate: rate,
-  };
+  const { data: leads } = await supabase.from("leads").select("score, rdv_booked").eq("client_id", clientId);
+  const total = leads?.length ?? 0;
+  const avgScore = total > 0 && leads?.some((l) => l.score != null)
+    ? Math.round(leads!.reduce((s, l) => s + (l.score ?? 0), 0) / leads!.filter((l) => l.score != null).length)
+    : null;
+  const rdvCount = leads?.filter((l) => l.rdv_booked).length ?? 0;
+  return { leads: leadsCount ?? 0, avgScore, rdvBooked: rdvCount };
 }
 
 async function getLeads(clientId: string): Promise<Lead[]> {
@@ -40,6 +34,15 @@ async function getLeads(clientId: string): Promise<Lead[]> {
     .eq("client_id", clientId)
     .order("created_at", { ascending: false });
   return (data ?? []) as Lead[];
+}
+
+function initials(name: string): string {
+  return name
+    .split(/\s+/)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 }
 
 export default async function ClientDashboardPage({
@@ -56,33 +59,54 @@ export default async function ClientDashboardPage({
   if (!client) notFound();
 
   return (
-    <div className="p-8">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-zinc-900">{client.name}</h1>
-          <p className="text-sm text-zinc-500">Dashboard leads</p>
+    <div className="px-[40px] py-8">
+      <nav className="mb-4 text-sm text-[var(--text-muted)]">
+        <Link href="/dashboard/clients" className="hover:text-[var(--purple-mid)]">Clients</Link>
+        <span className="mx-2">/</span>
+        <span className="text-[var(--text-primary)]">{client.name}</span>
+      </nav>
+
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--purple-light)] text-lg font-bold text-[var(--purple-dark)]">
+            {initials(client.name)}
+          </div>
+          <div>
+            <h1 className="text-[1.75rem] font-bold text-[var(--text-primary)]">{client.name}</h1>
+            <span
+              className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
+                client.is_active ? "bg-[#f0fdf4] text-[#16a34a]" : "bg-[#fef2f2] text-[#dc2626]"
+              }`}
+            >
+              {client.is_active ? "Actif" : "Inactif"}
+            </span>
+          </div>
         </div>
-        <Link
-          href={`/dashboard/clients/${id}/config`}
-          className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
-        >
-          Configurer l'agent
-        </Link>
+        <div className="flex gap-3">
+          <Link
+            href={`/dashboard/clients/${id}/config`}
+            className="btn-secondary rounded-[10px] px-4 py-2 text-sm"
+          >
+            Configurer l'agent
+          </Link>
+        </div>
       </div>
-      <div className="mb-6 flex gap-4">
-        <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-zinc-500">Conversations</p>
-          <p className="text-xl font-semibold text-zinc-900">{stats.conversations}</p>
+
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="card p-6">
+          <p className="text-[0.7rem] uppercase tracking-widest text-[var(--text-muted)]">Leads total</p>
+          <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.leads}</p>
         </div>
-        <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-zinc-500">Leads</p>
-          <p className="text-xl font-semibold text-zinc-900">{stats.leads}</p>
+        <div className="card p-6">
+          <p className="text-[0.7rem] uppercase tracking-widest text-[var(--text-muted)]">Score moyen</p>
+          <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.avgScore ?? "—"}</p>
         </div>
-        <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-zinc-500">Taux de qualification</p>
-          <p className="text-xl font-semibold text-zinc-900">{stats.qualificationRate}%</p>
+        <div className="card p-6">
+          <p className="text-[0.7rem] uppercase tracking-widest text-[var(--text-muted)]">RDV pris</p>
+          <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.rdvBooked}</p>
         </div>
       </div>
+
       <ClientLeadsActions clientId={id} leads={leads} />
     </div>
   );

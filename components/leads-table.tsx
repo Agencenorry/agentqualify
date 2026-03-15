@@ -5,10 +5,10 @@ import type { Lead } from "@/lib/types";
 import { LeadDetailModal } from "./lead-detail-modal";
 
 function scoreColor(score: number | null): string {
-  if (score == null) return "bg-zinc-200 text-zinc-600";
-  if (score >= 70) return "bg-emerald-100 text-emerald-700";
-  if (score >= 40) return "bg-amber-100 text-amber-700";
-  return "bg-zinc-100 text-zinc-600";
+  if (score == null) return "bg-[var(--cream)] text-[var(--text-muted)]";
+  if (score >= 80) return "bg-[#fef2f2] text-[#dc2626]";
+  if (score >= 60) return "bg-[#fff7ed] text-[#ea580c]";
+  return "bg-[#eff6ff] text-[#2563eb]";
 }
 
 function statusBadge(status: string | null) {
@@ -39,23 +39,23 @@ export function LeadsTable({
 
   return (
     <>
-      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-zinc-200 px-6 py-4">
-          <h2 className="font-medium text-zinc-900">Leads</h2>
+      <div className="card overflow-hidden">
+        <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-4">
+          <h2 className="font-semibold text-[var(--text-primary)]">Leads</h2>
           {onExportCsv && (
             <button
               type="button"
               onClick={onExportCsv}
-              className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+              className="rounded-lg border border-[var(--border)] bg-white px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--cream)]"
             >
-              Export CSV
+              Exporter CSV
             </button>
           )}
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-zinc-100 bg-zinc-50/50 text-left text-sm text-zinc-600">
+              <tr className="border-b border-[var(--border)] bg-[var(--cream)] text-left text-[0.7rem] uppercase tracking-widest text-[var(--text-muted)]">
                 <th className="px-6 py-3 font-medium">Nom</th>
                 <th className="px-6 py-3 font-medium">Société</th>
                 <th className="px-6 py-3 font-medium">Score</th>
@@ -74,7 +74,7 @@ export function LeadsTable({
                 </tr>
               ) : (
                 leads.map((lead) => (
-                  <tr key={lead.id} className="border-b border-zinc-100 hover:bg-zinc-50/50">
+                  <tr key={lead.id} className="border-b border-[var(--border)] transition hover:bg-[var(--cream)]">
                     <td className="px-6 py-3 font-medium text-zinc-900">{lead.name ?? "—"}</td>
                     <td className="px-6 py-3 text-zinc-600">{lead.company ?? "—"}</td>
                     <td className="px-6 py-3">

@@ -27,16 +27,17 @@ const TYPE_BADGE_CLASS: Record<TriggerType, string> = {
 };
 
 function configSummary(trigger: Trigger): string {
+  const cfg = trigger.config;
   switch (trigger.type) {
     case "click":
-      return "Sélecteur : " + (trigger.config.selector || "—");
+      return "Sélecteur : " + (cfg.selector || "—");
     case "page":
-      return "URL contient : " + (trigger.config.path || "—") + (trigger.config.delaySeconds != null ? ` · Délai ${trigger.config.delaySeconds}s` : "");
+      return "URL contient : " + (cfg.path || "—") + (cfg.delaySeconds != null ? ` · Délai ${cfg.delaySeconds}s` : "");
     case "timer":
-      return (trigger.config.path ? "Page : " + trigger.config.path + " · " : "") + (trigger.config.seconds ?? 0) + " secondes";
+      return (cfg.path ? "Page : " + cfg.path + " · " : "") + (cfg.seconds ?? 0) + " secondes";
     case "scroll":
-      if (trigger.config.selector) return "Élément : " + trigger.config.selector;
-      return "Scroll : " + (trigger.config.threshold ?? 80) + "%";
+      if (cfg.selector) return "Élément : " + cfg.selector;
+      return "Scroll : " + (cfg.threshold ?? 80) + "%";
     default:
       return "";
   }
@@ -157,7 +158,7 @@ export function TriggerEditor({ clientId, triggers, onUpdate }: TriggerEditorPro
   };
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+    <div className="card p-6">
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h3 className="font-medium text-zinc-900">Déclencheurs</h3>
@@ -167,7 +168,7 @@ export function TriggerEditor({ clientId, triggers, onUpdate }: TriggerEditorPro
           type="button"
           onClick={openAdd}
           disabled={list.length >= MAX_TRIGGERS}
-          className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50"
+          className="btn-primary rounded-[10px] px-4 py-2 text-sm disabled:opacity-50"
         >
           + Ajouter un déclencheur
         </button>
