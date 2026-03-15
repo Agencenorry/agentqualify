@@ -38,6 +38,8 @@ export interface Client {
   disqualify_criteria: string | null;
   qualification_questions: string[];
   rdv_link: string | null;
+  cta_text: string | null;
+  cta_url: string | null;
   notification_email: string | null;
   widget_color: string | null;
   widget_position: string | null;
@@ -58,6 +60,7 @@ export interface Lead {
   score: number | null;
   status: LeadStatus | null;
   summary: string | null;
+  recommendations: string[] | null;
   rdv_proposed: boolean;
   rdv_booked: boolean;
   conversation_id: string | null;

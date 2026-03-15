@@ -37,14 +37,19 @@ DISQUALIFIANTS : ${client.disqualify_criteria || 'Aucun'}
 QUESTIONS DE QUALIFICATION (une par message, naturellement) :
 ${questions}
 
+RÈGLE ABSOLUE : La toute première question doit TOUJOURS être "Quel est votre prénom ?" avant toute autre question de qualification.
+Utilise ensuite ce prénom dans toutes tes réponses suivantes.
+
+Quand tu génères le token [QUALIFY:...], le format est :
+[QUALIFY: prénom|email|société|rôle|taille équipe|défi principal|budget|score]
+Assure-toi de collecter l'email naturellement pendant la conversation en disant par exemple "Pour vous envoyer les informations, quel est votre email ?"
+score = 0-100 selon correspondance ICP.
+
 RÈGLES :
 1. Objectif unique : qualifier le prospect. Réponses courtes (2-3 phrases max).
 2. Pose les questions une à la fois, naturellement.
-3. Quand tu as au moins 3 réponses, termine avec :
-   [QUALIFY: nom|email|société|rôle|taille|défi|budget|score]
-   score = 0-100 selon correspondance ICP
-4. Si score >= 70, propose un RDV : ${client.rdv_link || 'lien non configuré'}
-5. Ne révèle pas que tu es une IA sauf si demandé.`;
+3. Si score >= 70, propose un RDV : ${client.cta_url || client.rdv_link || 'lien non configuré'}
+4. Ne révèle pas que tu es une IA sauf si demandé.`;
 }
 
 function parseQualifyPayload(text: string): { name: string; email: string; company: string; role: string; team_size: string; challenge: string; budget: string; score: number } | null {
@@ -70,6 +75,52 @@ function statusFromScore(score: number): 'hot' | 'warm' | 'cold' {
   if (score >= 70) return 'hot';
   if (score >= 40) return 'warm';
   return 'cold';
+}
+
+type EnrichedLead = { summary: string; recommendations: string[] };
+
+async function generateEnrichedSummary(
+  qualifyData: { name: string; email: string; company: string; role: string; team_size: string; challenge: string; budget: string; score: number },
+  anthropic: ReturnType<typeof getAnthropicClient>
+): Promise<EnrichedLead | null> {
+  const prompt = `À partir de ces informations prospect :
+Prénom: ${qualifyData.name}
+Société: ${qualifyData.company}
+Rôle: ${qualifyData.role}
+Taille équipe: ${qualifyData.team_size}
+Défi principal: ${qualifyData.challenge}
+Budget: ${qualifyData.budget}
+Score: ${qualifyData.score}/100
+
+Génère un objet JSON avec :
+{
+  "summary": "Résumé contextualisé en 2-3 phrases qui explique le profil, le contexte métier et pourquoi ce prospect est intéressant",
+  "recommendations": [
+    "Conseil 1 pour préparer le RDV (ex: angle d'approche)",
+    "Conseil 2 (ex: objection probable à anticiper)",
+    "Conseil 3 (ex: offre à mettre en avant)"
+  ]
+}
+Réponds UNIQUEMENT avec le JSON, rien d'autre.`;
+
+  try {
+    const response = await anthropic.messages.create({
+      model: CLAUDE_MODEL,
+      max_tokens: 512,
+      messages: [{ role: 'user', content: prompt }],
+    });
+    const textBlock = response.content.find((b) => b.type === 'text');
+    const raw = textBlock && 'text' in textBlock ? textBlock.text : '';
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return null;
+    const parsed = JSON.parse(jsonMatch[0]) as { summary?: string; recommendations?: string[] };
+    return {
+      summary: typeof parsed.summary === 'string' ? parsed.summary : '',
+      recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations : [],
+    };
+  } catch {
+    return null;
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -147,6 +198,7 @@ export async function POST(request: NextRequest) {
             .single();
 
           if (existingLead) {
+            const fallbackSummary = `${qualifyData.name} - ${qualifyData.company} - Score ${qualifyData.score}`;
             await supabase
               .from('leads')
               .update({
@@ -159,7 +211,7 @@ export async function POST(request: NextRequest) {
                 budget: qualifyData.budget || null,
                 score: qualifyData.score,
                 status: statusFromScore(qualifyData.score),
-                summary: `${qualifyData.name} - ${qualifyData.company} - Score ${qualifyData.score}`,
+                summary: fallbackSummary,
                 rdv_proposed: qualifyData.score >= 70,
               })
               .eq('id', existingLead.id);
@@ -231,6 +283,21 @@ export async function POST(request: NextRequest) {
               await supabase.from('leads').update({ conversation_id: newConv.id }).eq('id', newLead.id);
             }
           }
+        }
+      }
+
+      // Résumé enrichi + recommandations (second appel Claude)
+      if (lead) {
+        const enriched = await generateEnrichedSummary(qualifyData, anthropic);
+        if (enriched) {
+          await supabase
+            .from('leads')
+            .update({
+              summary: enriched.summary,
+              recommendations: enriched.recommendations,
+            })
+            .eq('id', lead.id);
+          lead = { ...lead, summary: enriched.summary, recommendations: enriched.recommendations };
         }
       }
     } else {

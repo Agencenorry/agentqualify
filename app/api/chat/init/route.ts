@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     const supabase = createServiceRoleClient();
     const { data: client, error } = await supabase
       .from('clients')
-      .select('agent_name, agent_greeting, widget_color, widget_position, rdv_link, triggers')
+      .select('agent_name, agent_greeting, widget_color, widget_position, rdv_link, cta_text, cta_url, triggers')
       .eq('id', clientId)
       .eq('is_active', true)
       .single();
@@ -45,8 +45,8 @@ export async function GET(request: NextRequest) {
         greeting: client.agent_greeting ?? '',
         widgetColor: client.widget_color ?? '#1a1917',
         widgetPosition: client.widget_position ?? 'bottom-right',
-        ctaUrl: client.rdv_link ?? '',
-        ctaText: client.rdv_link ? 'Réserver une démo' : 'Être recontacté',
+        ctaUrl: client.cta_url ?? client.rdv_link ?? '',
+        ctaText: client.cta_text ?? 'Réserver une démo',
         triggers,
       },
       { headers: corsHeaders() }

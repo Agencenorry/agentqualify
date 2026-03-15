@@ -19,6 +19,8 @@ create table clients (
   disqualify_criteria text,
   qualification_questions jsonb default '[]',
   rdv_link text,
+  cta_text text default 'Réserver une démo',
+  cta_url text,
   notification_email text,
 
   -- Widget
@@ -48,6 +50,7 @@ create table leads (
   score integer,
   status text check (status in ('hot', 'warm', 'cold')),
   summary text,
+  recommendations jsonb default '[]',
   rdv_proposed boolean default false,
   rdv_booked boolean default false,
 

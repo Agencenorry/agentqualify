@@ -26,6 +26,8 @@ export function AgentConfigForm({ client, onSuccess }: ConfigFormProps) {
       ? (client.qualification_questions as string[]).join("\n")
       : "",
     rdv_link: client.rdv_link ?? "",
+    cta_text: client.cta_text ?? "Réserver une démo",
+    cta_url: client.cta_url ?? "",
     notification_email: client.notification_email ?? "",
     widget_color: client.widget_color ?? "#1a1917",
     widget_position: client.widget_position ?? "bottom-right",
@@ -44,6 +46,8 @@ export function AgentConfigForm({ client, onSuccess }: ConfigFormProps) {
           .split("\n")
           .map((q) => q.trim())
           .filter(Boolean),
+        cta_text: form.cta_text || null,
+        cta_url: form.cta_url || null,
       }),
     });
     setSaving(false);
@@ -183,6 +187,32 @@ export function AgentConfigForm({ client, onSuccess }: ConfigFormProps) {
               type="email"
               value={form.notification_email}
               onChange={(e) => setForm((f) => ({ ...f, notification_email: e.target.value }))}
+              className="input-base w-full"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-xl border-b border-[var(--border)] pb-6">
+        <h3 className="mb-4 font-semibold text-[var(--text-primary)]">Comportement</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="mb-1 block text-sm text-zinc-600">Texte du bouton CTA</label>
+            <input
+              type="text"
+              value={form.cta_text}
+              onChange={(e) => setForm((f) => ({ ...f, cta_text: e.target.value }))}
+              placeholder="Réserver une démo"
+              className="input-base w-full"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm text-zinc-600">Lien du bouton CTA</label>
+            <input
+              type="url"
+              value={form.cta_url}
+              onChange={(e) => setForm((f) => ({ ...f, cta_url: e.target.value }))}
+              placeholder="https://calendly.com/..."
               className="input-base w-full"
             />
           </div>

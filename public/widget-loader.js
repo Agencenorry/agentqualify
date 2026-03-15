@@ -60,7 +60,7 @@
     ".aq-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:999998;opacity:0;visibility:hidden;transition:opacity .3s ease, visibility .3s ease;}" +
     ".aq-backdrop.aq-visible{opacity:1;visibility:visible;}" +
     ".aq-card{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);max-width:560px;width:90vw;background:#fff;border-radius:20px;padding:48px;box-shadow:0 32px 80px rgba(0,0,0,.18);z-index:999999;font-family:system-ui,-apple-system,sans-serif;}" +
-    ".aq-progress-wrap{position:absolute;top:0;left:0;right:0;height:3px;background:#f0f0f0;border-radius:20px 20px 0 0;overflow:hidden;}" +
+    ".aq-progress-wrap{height:3px;background:#f0f0f0;border-radius:4px;overflow:hidden;margin-bottom:20px;}" +
     ".aq-progress-fill{height:100%;background:#111;width:0%;transition:width .4s ease;}" +
     ".aq-close-btn{position:absolute;top:16px;right:16px;width:28px;height:28px;border-radius:50%;background:#f5f5f5;border:none;cursor:pointer;color:#999;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;transition:background .2s;}" +
     ".aq-close-btn:hover{background:#eee;color:#111;}" +
@@ -99,9 +99,9 @@
   var card = document.createElement("div");
   card.className = "aq-card";
   card.innerHTML =
-    '<div class="aq-progress-wrap"><div class="aq-progress-fill"></div></div>' +
     '<button type="button" class="aq-close-btn" aria-label="Fermer">×</button>' +
     '<div class="aq-content">' +
+    '<div class="aq-progress-wrap"><div class="aq-progress-fill"></div></div>' +
     '<div class="aq-previous" style="display:none;"></div>' +
     '<div class="aq-question"></div>' +
     '<div class="aq-thinking" style="display:none;"><span class="aq-thinking-dots"><span></span><span></span><span></span></span></div>' +

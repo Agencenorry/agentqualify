@@ -27,6 +27,8 @@ export function LeadDetailModal({
     { label: "Date", value: lead.created_at ? new Date(lead.created_at).toLocaleString("fr-FR") : null },
   ];
 
+  const recommendations = Array.isArray(lead.recommendations) ? lead.recommendations : [];
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div
@@ -51,6 +53,19 @@ export function LeadDetailModal({
               <span className="text-right text-zinc-900">{value ?? "—"}</span>
             </div>
           ))}
+          {recommendations.length > 0 && (
+            <div className="mt-6 border-t border-zinc-200 pt-4">
+              <h3 className="mb-3 text-sm font-semibold text-zinc-900">Préparer le RDV</h3>
+              <ul className="list-none space-y-2">
+                {recommendations.map((rec, i) => (
+                  <li key={i} className="flex gap-2 text-sm text-zinc-700">
+                    <span aria-hidden>💡</span>
+                    <span>{rec}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
         <div className="flex justify-end gap-2 border-t border-zinc-200 px-6 py-4">
           {lead.email && (
