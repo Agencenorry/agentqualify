@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase';
 import { getAnthropicClient, CLAUDE_MODEL } from '@/lib/anthropic';
-import type { Client, Lead, ChatMessage } from '@/lib/types';
+import type { Client, Lead, ChatMessage, CaseStudy, Insight, ContextCard } from '@/lib/types';
 
 function corsHeaders() {
   return {
@@ -19,13 +19,36 @@ export async function OPTIONS() {
 }
 
 const QUALIFY_REGEX = /\[QUALIFY:\s*([^\]]+)\]/;
+const SHOW_CASE_REGEX = /\[SHOW_CASE:\s*([^\]]+)\]/;
+const SHOW_INSIGHT_REGEX = /\[SHOW_INSIGHT:\s*([^\]]+)\]/;
 
-function buildSystemPrompt(client: Client): string {
+function buildSystemPrompt(client: Client, caseStudies: CaseStudy[], insights: Insight[]): string {
   const name = client.agent_name || 'Alex';
   const greeting = client.agent_greeting ? `Message d'accueil : ${client.agent_greeting}\n\n` : '';
   const questions = Array.isArray(client.qualification_questions)
     ? client.qualification_questions.join('\n')
     : (client.qualification_questions as unknown as string[])?.join?.('\n') ?? '';
+
+  const caseStudiesBlock =
+    caseStudies.length > 0
+      ? `RÉALISATIONS DISPONIBLES (à mentionner naturellement quand le secteur correspond) :\n${caseStudies.map((cs) => `- Secteur "${cs.sector}" (mots-clés: ${(cs.sector_keywords || []).join(', ')}) : ${cs.company_name} → ${cs.result}`).join('\n')}`
+      : '';
+  const insightsBlock =
+    insights.length > 0
+      ? `INSIGHTS DISPONIBLES (à mentionner quand le défi correspond) :\n${insights.map((i) => `- Défi keywords: ${(i.challenge_keywords || []).join(', ')} → Stat: "${i.stat}" (${i.context})`).join('\n')}`
+      : '';
+
+  const injectionRules =
+    caseStudies.length > 0 || insights.length > 0
+      ? `
+RÈGLES D'INJECTION CONTEXTUELLE :
+1. Quand le prospect mentionne son secteur et qu'une réalisation correspond, intègre naturellement dans ta réponse suivante : "D'ailleurs, on a récemment accompagné [company_name] — [result]. Ça pourrait vous parler." Puis termine ta réponse par le marqueur : [SHOW_CASE: id_de_la_realisation]
+2. Quand le prospect mentionne un défi et qu'un insight correspond, intègre dans ta réponse : "[context] — [stat]." Puis termine par le marqueur : [SHOW_INSIGHT: id_de_l_insight]
+3. Maximum 1 réalisation et 1 insight par conversation.
+4. L'injection doit sembler naturelle, pas forcée.
+5. Ne montre jamais les deux dans le même message.
+`
+      : '';
 
   return `Tu es ${name}, un agent IA de qualification de prospects pour ${client.name}.
 
@@ -44,6 +67,10 @@ Quand tu génères le token [QUALIFY:...], le format est :
 [QUALIFY: prénom|email|société|rôle|taille équipe|défi principal|budget|score]
 Assure-toi de collecter l'email naturellement pendant la conversation en disant par exemple "Pour vous envoyer les informations, quel est votre email ?"
 score = 0-100 selon correspondance ICP.
+
+${caseStudiesBlock}
+${insightsBlock}
+${injectionRules}
 
 RÈGLES :
 1. Objectif unique : qualifier le prospect. Réponses courtes (2-3 phrases max).
@@ -75,6 +102,46 @@ function statusFromScore(score: number): 'hot' | 'warm' | 'cold' {
   if (score >= 70) return 'hot';
   if (score >= 40) return 'warm';
   return 'cold';
+}
+
+function parseContextCard(content: string, caseStudies: CaseStudy[], insights: Insight[]): { cleanedContent: string; contextCard?: ContextCard } {
+  const caseMatch = content.match(SHOW_CASE_REGEX);
+  const insightMatch = content.match(SHOW_INSIGHT_REGEX);
+  const caseIndex = caseMatch ? content.indexOf(caseMatch[0]) : -1;
+  const insightIndex = insightMatch ? content.indexOf(insightMatch[0]) : -1;
+
+  let cleanedContent = content;
+  let contextCard: ContextCard | undefined;
+
+  if (caseIndex >= 0 && (insightIndex < 0 || caseIndex <= insightIndex)) {
+    const id = caseMatch![1].trim();
+    const cs = caseStudies.find((c) => c.id === id);
+    if (cs) {
+      contextCard = {
+        type: 'case_study',
+        companyName: cs.company_name,
+        result: cs.result,
+        description: cs.description ?? undefined,
+        logoUrl: cs.logo_url ?? undefined,
+        caseUrl: cs.case_url ?? undefined,
+      };
+      cleanedContent = content.replace(SHOW_CASE_REGEX, '').replace(/\s*\n\s*\n/g, '\n\n').trim();
+    }
+  } else if (insightIndex >= 0) {
+    const id = insightMatch![1].trim();
+    const ins = insights.find((i) => i.id === id);
+    if (ins) {
+      contextCard = {
+        type: 'insight',
+        stat: ins.stat,
+        context: ins.context,
+        source: ins.source ?? undefined,
+      };
+      cleanedContent = content.replace(SHOW_INSIGHT_REGEX, '').replace(/\s*\n\s*\n/g, '\n\n').trim();
+    }
+  }
+
+  return { cleanedContent, contextCard };
 }
 
 type EnrichedLead = { summary: string; recommendations: string[] };
@@ -126,11 +193,15 @@ Réponds UNIQUEMENT avec le JSON, rien d'autre.`;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { clientId, messages, conversationId: existingConvId } = body as {
+    const { clientId, messages, conversationId: existingConvId, caseStudies: bodyCaseStudies, insights: bodyInsights } = body as {
       clientId?: string;
       messages?: ChatMessage[];
       conversationId?: string | null;
+      caseStudies?: CaseStudy[];
+      insights?: Insight[];
     };
+    const caseStudies = Array.isArray(bodyCaseStudies) ? bodyCaseStudies : [];
+    const insights = Array.isArray(bodyInsights) ? bodyInsights : [];
 
     if (!clientId || !messages?.length) {
       return NextResponse.json(
@@ -154,7 +225,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const systemPrompt = buildSystemPrompt(client as Client);
+    const systemPrompt = buildSystemPrompt(client as Client, caseStudies, insights);
     const anthropic = getAnthropicClient();
 
     const apiMessages = messages.map((m) => ({
@@ -170,7 +241,8 @@ export async function POST(request: NextRequest) {
     });
 
     const textBlock = response.content.find((b) => b.type === 'text');
-    const content = textBlock && 'text' in textBlock ? textBlock.text : '';
+    const rawContent = textBlock && 'text' in textBlock ? textBlock.text : '';
+    const { cleanedContent: content, contextCard } = parseContextCard(rawContent, caseStudies, insights);
 
     // Détection du token [QUALIFY: ...]
     const qualifyData = parseQualifyPayload(content);
@@ -328,6 +400,7 @@ export async function POST(request: NextRequest) {
         qualified: Boolean(qualifyData),
         lead: lead ?? undefined,
         conversationId: conversationId ?? undefined,
+        ...(contextCard && { contextCard }),
       },
       { headers: corsHeaders() }
     );

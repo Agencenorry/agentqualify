@@ -39,6 +39,20 @@ export async function GET(request: NextRequest) {
 
     const triggers = Array.isArray(client.triggers) ? client.triggers : [];
 
+    const { data: caseStudiesRows } = await supabase
+      .from('case_studies')
+      .select('id, sector, sector_keywords, company_name, result, description, logo_url, case_url')
+      .eq('client_id', clientId)
+      .eq('is_active', true);
+    const caseStudies = Array.isArray(caseStudiesRows) ? caseStudiesRows : [];
+
+    const { data: insightsRows } = await supabase
+      .from('insights')
+      .select('id, challenge_keywords, stat, context, source')
+      .eq('client_id', clientId)
+      .eq('is_active', true);
+    const insights = Array.isArray(insightsRows) ? insightsRows : [];
+
     return NextResponse.json(
       {
         agentName: client.agent_name ?? 'Alex',
@@ -48,6 +62,8 @@ export async function GET(request: NextRequest) {
         ctaUrl: client.cta_url ?? client.rdv_link ?? '',
         ctaText: client.cta_text ?? 'Réserver une démo',
         triggers,
+        caseStudies,
+        insights,
       },
       { headers: corsHeaders() }
     );

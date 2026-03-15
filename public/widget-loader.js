@@ -24,7 +24,7 @@
       ? crypto.randomUUID()
       : "x" + Math.random().toString(36).slice(2) + Date.now().toString(36);
 
-  var config = { agentName: "Alex", greeting: "", widgetColor: "#1a1917", ctaText: "Réserver une démo", ctaUrl: "" };
+  var config = { agentName: "Alex", greeting: "", widgetColor: "#1a1917", ctaText: "Réserver une démo", ctaUrl: "", caseStudies: [], insights: [] };
   var messages = [];
   var isQualified = false;
   var userClosed = false;
@@ -86,7 +86,20 @@
     ".aq-mini-btn{position:fixed;bottom:20px;right:24px;font-size:.75rem;color:#666;background:#fff;border:1px solid #e5e5e5;border-radius:20px;padding:7px 14px;cursor:pointer;font-family:system-ui,-apple-system,sans-serif;z-index:999997;transition:color .2s,border-color .2s;}" +
     ".aq-mini-btn:hover{color:#111;border-color:#111;}" +
     ".aq-slide-enter{opacity:0;transform:translateY(8px);}" +
-    ".aq-slide-enter.aq-active{opacity:1;transform:translateY(0);transition:opacity .25s ease, transform .25s ease;}";
+    ".aq-slide-enter.aq-active{opacity:1;transform:translateY(0);transition:opacity .25s ease, transform .25s ease;}" +
+    ".aq-context-card{margin-top:20px;border:1.5px solid #f0f0f0;border-radius:12px;padding:16px;background:#fafafa;animation:aq-fadein .4s ease;}" +
+    "@keyframes aq-fadein{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}" +
+    ".aq-context-card.aq-case{border-left:3px solid #111;}" +
+    ".aq-context-card.aq-insight{border-left:3px solid #7C3AED;background:#faf7ff;}" +
+    ".aq-context-card-label{font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:#999;margin-bottom:8px;font-weight:600;}" +
+    ".aq-context-card.aq-insight .aq-context-card-label{color:#7C3AED;}" +
+    ".aq-context-card-result{font-size:1.1rem;font-weight:700;color:#111;margin-bottom:4px;}" +
+    ".aq-context-card.aq-insight .aq-context-card-result{color:#7C3AED;font-size:1.4rem;}" +
+    ".aq-context-card-name{font-size:.78rem;color:#666;}" +
+    ".aq-context-card-desc{font-size:.75rem;color:#888;margin-top:6px;line-height:1.5;}" +
+    ".aq-context-card-link{font-size:.72rem;color:#111;text-decoration:none;margin-top:8px;display:inline-block;}" +
+    ".aq-context-card-link:hover{text-decoration:underline;}" +
+    ".aq-context-card-source{font-size:.65rem;color:#bbb;margin-top:6px;}";
 
   var style = document.createElement("style");
   style.textContent = css;
@@ -224,6 +237,34 @@
     if (!ctaUrl) ctaEl.style.display = "none";
   }
 
+  function escHtml(str) {
+    return String(str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function showContextCard(card) {
+    var existing = contentBlock.querySelector(".aq-context-card");
+    if (existing) existing.remove();
+    var div = document.createElement("div");
+    if (card.type === "case_study") {
+      div.className = "aq-context-card aq-case";
+      div.innerHTML =
+        '<div class="aq-context-card-label">Réalisation client</div>' +
+        '<div class="aq-context-card-result">' + escHtml(card.result) + "</div>" +
+        '<div class="aq-context-card-name">' + escHtml(card.companyName) + "</div>" +
+        (card.description ? '<div class="aq-context-card-desc">' + escHtml(card.description) + "</div>" : "") +
+        (card.caseUrl ? '<a href="' + escHtml(card.caseUrl) + '" class="aq-context-card-link" target="_blank" rel="noopener">Voir la réalisation →</a>' : "");
+    } else if (card.type === "insight") {
+      div.className = "aq-context-card aq-insight";
+      div.innerHTML =
+        '<div class="aq-context-card-label">Le saviez-vous ?</div>' +
+        '<div class="aq-context-card-result">' + escHtml(card.stat) + "</div>" +
+        '<div class="aq-context-card-name">' + escHtml(card.context) + "</div>" +
+        (card.source ? '<div class="aq-context-card-source">' + escHtml(card.source) + "</div>" : "");
+    }
+    var sendBtnEl = contentBlock.querySelector(".aq-send");
+    contentBlock.insertBefore(div, sendBtnEl);
+  }
+
   function sendAnswer(text) {
     text = (text || "").trim();
     if (!text) return;
@@ -233,7 +274,13 @@
     updateProgress();
     showThinking();
 
-    var payload = { clientId: clientId, messages: messages, conversationId: conversationId };
+    var payload = {
+      clientId: clientId,
+      messages: messages,
+      conversationId: conversationId,
+      caseStudies: config.caseStudies || [],
+      insights: config.insights || [],
+    };
     fetch(baseUrl + "/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -246,6 +293,12 @@
       .then(function (data) {
         hideThinking();
         messages.push({ role: "assistant", content: data.content });
+        if (data.contextCard) {
+          showContextCard(data.contextCard);
+        } else {
+          var existingCard = contentBlock.querySelector(".aq-context-card");
+          if (existingCard) existingCard.remove();
+        }
         if (data.qualified) {
           showQualified(config.ctaText, config.ctaUrl);
         } else {
@@ -459,6 +512,8 @@
       config.widgetColor = data.widgetColor || "#1a1917";
       config.ctaText = data.ctaText || "Réserver une démo";
       config.ctaUrl = data.ctaUrl || "";
+      config.caseStudies = data.caseStudies || [];
+      config.insights = data.insights || [];
       var triggers = Array.isArray(data.triggers) ? data.triggers : [];
       if (!getOpened()) {
         triggers.forEach(installTrigger);

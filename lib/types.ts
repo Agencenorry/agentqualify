@@ -92,4 +92,36 @@ export interface ChatResponse {
   qualified: boolean;
   lead?: Lead;
   conversationId?: string;
+  contextCard?: ContextCard;
 }
+
+/** Réalisation client (case study) pour injection contextuelle */
+export interface CaseStudy {
+  id: string;
+  created_at?: string;
+  client_id: string;
+  sector: string;
+  sector_keywords: string[];
+  company_name: string;
+  result: string;
+  description: string | null;
+  logo_url: string | null;
+  case_url: string | null;
+  is_active: boolean;
+}
+
+/** Insight / stat pour injection contextuelle */
+export interface Insight {
+  id: string;
+  created_at?: string;
+  client_id: string;
+  challenge_keywords: string[];
+  stat: string;
+  context: string;
+  source: string | null;
+  is_active: boolean;
+}
+
+export type ContextCard =
+  | { type: 'case_study'; companyName: string; result: string; description?: string | null; logoUrl?: string | null; caseUrl?: string | null }
+  | { type: 'insight'; stat: string; context: string; source?: string | null };

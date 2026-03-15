@@ -5,6 +5,8 @@ import Link from "next/link";
 import { AgentConfigForm } from "@/components/agent-config-form";
 import { WidgetPreview } from "@/components/widget-preview";
 import { TriggerEditor } from "@/components/trigger-editor";
+import { CaseStudyEditor } from "@/components/case-study-editor";
+import { InsightEditor } from "@/components/insight-editor";
 import type { Client, Trigger } from "@/lib/types";
 
 type ConfigClientProps = {
@@ -40,6 +42,12 @@ export function ConfigClient({ client }: ConfigClientProps) {
               triggers={triggers}
               onUpdate={setTriggers}
             />
+          </div>
+          <div className="card p-6">
+            <CaseStudyEditor clientId={client.id} />
+          </div>
+          <div className="card p-6">
+            <InsightEditor clientId={client.id} />
           </div>
         </div>
 
